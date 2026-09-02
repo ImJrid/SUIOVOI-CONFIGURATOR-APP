@@ -3,7 +3,7 @@
 # ============================================================================
 # INSTALL PATHS
 # ============================================================================
-$script:CurrentVersion = "1"
+$script:CurrentVersion = "1.1"
 $script:InstallDir     = "C:\SUIOVOI CONFIG"
 $script:InstallPath    = "$script:InstallDir\Suiovoi.ps1"
 $script:ScriptUrl      = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/Suiovoi.ps1"
@@ -4100,9 +4100,11 @@ $startX = 30
 $rightMargin = 30
 $mainHeaderBottom = 90
 $mainPanelHeight  = 795
-# +1 reserves a final full-width row at the bottom for the standalone Exit
-# tile below, so the grid tiles above keep the exact same size as before.
-$rows = [Math]::Ceiling(($websites.Count + 1) / $cols)
+# Always reserve one full extra row at the bottom for the standalone Exit
+# tile, regardless of whether the tile count is odd or even (odd counts
+# leave a half-empty last row, which previously wasn't enough to avoid
+# the Exit tile overlapping the final grid tile).
+$rows = [Math]::Ceiling($websites.Count / $cols) + 1
 $cardWidth  = [int]((790 - (($cols - 1) * $colGap)) / $cols)
 $cardHeight = [int]((($mainPanelHeight - $mainHeaderBottom) - (($rows - 1) * $rowGap)) / $rows)
 
