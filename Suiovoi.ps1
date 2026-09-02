@@ -4100,11 +4100,9 @@ $startX = 30
 $rightMargin = 30
 $mainHeaderBottom = 90
 $mainPanelHeight  = 795
-# Always reserve one full extra row at the bottom for the standalone Exit
-# tile, regardless of whether the tile count is odd or even (odd counts
-# leave a half-empty last row, which previously wasn't enough to avoid
-# the Exit tile overlapping the final grid tile).
-$rows = [Math]::Ceiling($websites.Count / $cols) + 1
+# Always reserve one grid slot at the bottom for the standalone Exit tile,
+# which sits directly after the last website tile in the same grid layout.
+$rows = [Math]::Ceiling(($websites.Count + 1) / $cols)
 $cardWidth  = [int]((790 - (($cols - 1) * $colGap)) / $cols)
 $cardHeight = [int]((($mainPanelHeight - $mainHeaderBottom) - (($rows - 1) * $rowGap)) / $rows)
 
@@ -4425,12 +4423,14 @@ foreach ($site in $websites) {
 }
 
 # ============================================================================
-# EXIT TILE - standalone, full-width, centered along the bottom of the grid
+# EXIT TILE - sits in the same grid slot as a normal tile, directly after
+# the last website tile (same row/col math, same size).
 # ============================================================================
-$exitRow  = $rows - 1
+$exitCol = $index % $cols
+$exitRow = [int][Math]::Floor($index / $cols)
 $exitTile = New-Object System.Windows.Forms.Button
-$exitTile.Location = New-Object System.Drawing.Point($startX, ($mainHeaderBottom + ($exitRow * ($cardHeight + $rowGap))))
-$exitTile.Size = New-Object System.Drawing.Size((($cardWidth * $cols) + ($colGap * ($cols - 1))), $cardHeight)
+$exitTile.Location = New-Object System.Drawing.Point(($startX + ($exitCol * ($cardWidth + $colGap))), ($mainHeaderBottom + ($exitRow * ($cardHeight + $rowGap))))
+$exitTile.Size = New-Object System.Drawing.Size($cardWidth, $cardHeight)
 $exitTile.FlatStyle = "Flat"
 $exitTile.FlatAppearance.BorderSize = 0
 $exitTile.BackColor = [System.Drawing.Color]::FromArgb(26, 6, 6)
