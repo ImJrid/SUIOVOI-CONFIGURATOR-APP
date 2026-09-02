@@ -3,7 +3,7 @@
 # ============================================================================
 # INSTALL PATHS
 # ============================================================================
-$script:CurrentVersion = "1.1"
+$script:CurrentVersion = "1.2"
 $script:InstallDir     = "C:\SUIOVOI CONFIG"
 $script:InstallPath    = "$script:InstallDir\Suiovoi.ps1"
 $script:ScriptUrl      = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/Suiovoi.ps1"
