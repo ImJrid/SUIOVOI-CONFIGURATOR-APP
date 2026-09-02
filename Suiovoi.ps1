@@ -23,7 +23,7 @@ $script:suiovoiHover = @{}
 
 
 
-function Install-MbcIcon {
+function Install-SuiovoiIcon {
     # Resolves a local path to Suiovoi.ico, trying (in order):
     #   1. Next to the running script (so a bundled .ico is picked up as-is)
     #   2. Already cached in the install dir from a previous run
@@ -57,7 +57,7 @@ function Install-MbcIcon {
     }
 }
 
-function Install-MbcLogo {
+function Install-SuiovoiLogo {
     # Resolves a local path to Title.png, trying (in order):
     #   1. Next to the running script (so a bundled Title.png is picked up as-is)
     #   2. Already cached in the install dir from a previous run
@@ -2973,8 +2973,8 @@ Read-Settings
 Get-MusicFile
 
 # 2. Extract MBC icon/logo and create Desktop shortcut (first run only)
-$script:IconPath = Install-MbcIcon
-$script:LogoPath = Install-MbcLogo
+$script:IconPath = Install-SuiovoiIcon
+$script:LogoPath = Install-SuiovoiLogo
 Install-DesktopShortcut -IconPath $script:IconPath
 Install-StartMenuShortcut -IconPath $script:IconPath
 
