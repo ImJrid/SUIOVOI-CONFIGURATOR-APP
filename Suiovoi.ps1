@@ -4306,23 +4306,39 @@ foreach ($site in $websites) {
                 }
 
                 if (-not $downloadUrl) {
-                    Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Using main branch instead" -ErrorAction SilentlyContinue
-                    $downloadUrl = $script:ScriptUrl
+                    if ($tagLine) {
+                        # We DID get a valid release with a real tag_name - it's just missing
+                        # a .ps1 asset attached to it. The tag is still the authoritative
+                        # version, so keep $tagLine as-is and only swap the download source
+                        # to main branch. (Previously this branch unconditionally re-derived
+                        # $tagLine from the main-branch file's own version constant, which
+                        # silently clobbered a correct, newer release tag with whatever
+                        # version happened to be hardcoded in main - causing "up to date"
+                        # false positives whenever main hadn't been bumped to match.)
+                        Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Release v$tagLine has no .ps1 asset attached - downloading file from main branch instead (version still taken from the release tag)" -ErrorAction SilentlyContinue
+                        $downloadUrl = $script:ScriptUrl
+                    } else {
+                        # No usable release info at all (no releases published, or the API
+                        # call itself failed) - the only version signal we have left is the
+                        # constant baked into the main-branch file.
+                        Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Using main branch instead" -ErrorAction SilentlyContinue
+                        $downloadUrl = $script:ScriptUrl
 
-                    try {
-                        $mainScript = $wc.DownloadString($script:ScriptUrl)
-                        $mainVerLine = ($mainScript -split "`n" | Where-Object { $_ -match '^\$script:CurrentVersion\s*=' } | Select-Object -First 1)
-                        $tagLine = ($mainVerLine -replace '.*=\s*"([^"]+)".*', '$1').Trim()
-                        Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Main branch reports version: $tagLine" -ErrorAction SilentlyContinue
-                    } catch {
-                        Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Could not read version from main branch - skipping" -ErrorAction SilentlyContinue
-                        [System.Windows.Forms.MessageBox]::Show(
-                            "Couldn't check for updates. Check your internet connection and try again.`n`n$($_.Exception.Message)",
-                            "Suiovoi Configurator - Update Check Failed",
-                            [System.Windows.Forms.MessageBoxButtons]::OK,
-                            [System.Windows.Forms.MessageBoxIcon]::Warning
-                        ) | Out-Null
-                        return
+                        try {
+                            $mainScript = $wc.DownloadString($script:ScriptUrl)
+                            $mainVerLine = ($mainScript -split "`n" | Where-Object { $_ -match '^\$script:CurrentVersion\s*=' } | Select-Object -First 1)
+                            $tagLine = ($mainVerLine -replace '.*=\s*"([^"]+)".*', '$1').Trim()
+                            Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Main branch reports version: $tagLine" -ErrorAction SilentlyContinue
+                        } catch {
+                            Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Could not read version from main branch - skipping" -ErrorAction SilentlyContinue
+                            [System.Windows.Forms.MessageBox]::Show(
+                                "Couldn't check for updates. Check your internet connection and try again.`n`n$($_.Exception.Message)",
+                                "Suiovoi Configurator - Update Check Failed",
+                                [System.Windows.Forms.MessageBoxButtons]::OK,
+                                [System.Windows.Forms.MessageBoxIcon]::Warning
+                            ) | Out-Null
+                            return
+                        }
                     }
                 }
 
