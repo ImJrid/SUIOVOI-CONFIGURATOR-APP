@@ -4294,13 +4294,21 @@ foreach ($site in $websites) {
                 $wc = New-Object System.Net.WebClient
                 $wc.Headers.Add("User-Agent", "MARIUS-Updater")
 
-                $json        = $wc.DownloadString($releasesApi)
-                $tagLine     = (($json -split '"tag_name"\s*:\s*"')[1] -split '"')[0].TrimStart('vV')
-                $assetBlock  = ($json -split '"browser_download_url"\s*:\s*"')[1]
-                $downloadUrl = ($assetBlock -split '"')[0]
+                $downloadUrl = $null
+                $tagLine     = $null
 
-                if (-not $downloadUrl -or $downloadUrl -notlike "*.ps1") {
-                    Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - No .ps1 asset in release v$tagLine - falling back to main branch" -ErrorAction SilentlyContinue
+                try {
+                    $json        = $wc.DownloadString($releasesApi)
+                    $tagLine     = (($json -split '"tag_name"\s*:\s*"')[1] -split '"')[0].TrimStart('vV')
+                    $assetBlock  = ($json -split '"browser_download_url"\s*:\s*"')[1]
+                    $downloadUrl = ($assetBlock -split '"')[0]
+                    if (-not $downloadUrl -or $downloadUrl -notlike "*.ps1") { $downloadUrl = $null }
+                } catch {
+                    Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - No Releases published yet (or API error) - falling back to main branch" -ErrorAction SilentlyContinue
+                }
+
+                if (-not $downloadUrl) {
+                    Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Using main branch instead" -ErrorAction SilentlyContinue
                     $downloadUrl = $script:ScriptUrl
 
                     try {
@@ -4310,6 +4318,12 @@ foreach ($site in $websites) {
                         Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Main branch reports version: $tagLine" -ErrorAction SilentlyContinue
                     } catch {
                         Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Could not read version from main branch - skipping" -ErrorAction SilentlyContinue
+                        [System.Windows.Forms.MessageBox]::Show(
+                            "Couldn't check for updates. Check your internet connection and try again.`n`n$($_.Exception.Message)",
+                            "Suiovoi Configurator - Update Check Failed",
+                            [System.Windows.Forms.MessageBoxButtons]::OK,
+                            [System.Windows.Forms.MessageBoxIcon]::Warning
+                        ) | Out-Null
                         return
                     }
                 }
@@ -4366,6 +4380,12 @@ foreach ($site in $websites) {
                 [System.Diagnostics.Process]::GetCurrentProcess().Kill()
             } catch {
                 Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - ERROR $($_.Exception.Message)" -ErrorAction SilentlyContinue
+                [System.Windows.Forms.MessageBox]::Show(
+                    "Update failed: $($_.Exception.Message)",
+                    "Suiovoi Configurator - Update Failed",
+                    [System.Windows.Forms.MessageBoxButtons]::OK,
+                    [System.Windows.Forms.MessageBoxIcon]::Error
+                ) | Out-Null
             }
             return
         }
