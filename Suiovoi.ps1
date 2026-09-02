@@ -4075,10 +4075,8 @@ $websites = @(
     @{Name="USB Latency Analyzer"; URL="USB_ANALYZER";                                                Desc="Count chips between your device and CPU. More chips = more latency"},
     @{Name="USB Cache Cleaner";        URL="CACHE_CLEANER";                                              Desc="Clear stuck USB device cache so your controller re-enumerates cleanly"},
     @{Name="Creator Twitter";          URL="https://x.com/Rilol_8";                                  Desc="Follow for updates, tips, and support"},
-    @{Name="Suiovoi Toolbox";           URL="TOOLBOX";                                                    Desc="Gamebar Notification Removal, FR33THY Ultimate Guide, and more"}
-    # Removed - this pulled from the original creator's repo and would overwrite
-    # our customizations. Uncomment to restore:
-    # @{Name="Update Script";            URL="UPDATE";                                                     Desc="Download and install the latest version automatically"},
+    @{Name="Suiovoi Toolbox";           URL="TOOLBOX";                                                    Desc="Gamebar Notification Removal, FR33THY Ultimate Guide, and more"},
+    @{Name="Update Script";            URL="UPDATE";                                                     Desc="Download and install the latest version automatically"}
     # "Exit" is no longer part of the 2-column grid - it's built separately
     # below as a single wide tile centered along the bottom of the page.
 )
@@ -4314,7 +4312,19 @@ foreach ($site in $websites) {
                     }
                 }
 
-                Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Forcing install of v$tagLine from $downloadUrl" -ErrorAction SilentlyContinue
+                # ── Version check - skip the download entirely if already current ──
+                if ($tagLine -eq $script:CurrentVersion) {
+                    Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Already on latest (v$script:CurrentVersion) - skipping" -ErrorAction SilentlyContinue
+                    [System.Windows.Forms.MessageBox]::Show(
+                        "You're already on the latest version (v$script:CurrentVersion).",
+                        "Suiovoi Configurator - Up to Date",
+                        [System.Windows.Forms.MessageBoxButtons]::OK,
+                        [System.Windows.Forms.MessageBoxIcon]::Information
+                    ) | Out-Null
+                    return
+                }
+
+                Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - New version found: v$script:CurrentVersion -> v$tagLine - installing from $downloadUrl" -ErrorAction SilentlyContinue
 
                 $tempFile = "$env:TEMP\MARIUS_update_$tagLine.ps1"
                 $wc.DownloadFile($downloadUrl, $tempFile)
@@ -4340,6 +4350,13 @@ foreach ($site in $websites) {
                 }
                 $instSize = (Get-Item $installPath).Length
                 Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - SUCCESS v$tagLine installed ($instSize bytes) - relaunching" -ErrorAction SilentlyContinue
+
+                [System.Windows.Forms.MessageBox]::Show(
+                    "Updated to v$tagLine. Relaunching now...",
+                    "Suiovoi Configurator - Update Complete",
+                    [System.Windows.Forms.MessageBoxButtons]::OK,
+                    [System.Windows.Forms.MessageBoxIcon]::Information
+                ) | Out-Null
 
                 $args = "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$installPath`""
                 [System.Diagnostics.Process]::Start("cmd.exe", "/c start powershell.exe $args") | Out-Null
