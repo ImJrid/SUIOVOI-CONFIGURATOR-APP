@@ -6,13 +6,15 @@
 $script:CurrentVersion = "1"
 $script:InstallDir     = "C:\SUIOVOI CONFIG"
 $script:InstallPath    = "$script:InstallDir\Suiovoi.ps1"
-$script:ScriptUrl      = "https://raw.githubusercontent.com/EODBruz/MARIUS-BOARD-CONFIGURATOR/main/MARIUS.ps1"
-$script:ReleasesApi    = "https://api.github.com/repos/EODBruz/MARIUS-BOARD-CONFIGURATOR/releases/latest"
+$script:ScriptUrl      = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/Suiovoi.ps1"
+$script:ReleasesApi    = "https://api.github.com/repos/ImJrid/SUIOVOI-CONFIGURATOR-APP/releases/latest"
 $script:SettingsPath   = "$script:InstallDir\Settings.ini"
 $script:MusicPath      = "$script:InstallDir\MMusic.mp3"
-$script:MusicUrl       = "https://raw.githubusercontent.com/EODBruz/MARIUS-BOARD-CONFIGURATOR/main/MMusic.mp3"
+$script:MusicUrl       = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/MMusic.mp3"
 $script:IconInstallPath = "$script:InstallDir\Suiovoi.ico"
-$script:IconUrl         = "https://raw.githubusercontent.com/EODBruz/MARIUS-BOARD-CONFIGURATOR/main/Suiovoi.ico"
+$script:IconUrl         = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/suiovoi.ico"
+$script:LogoInstallPath = "$script:InstallDir\Title.png"
+$script:LogoUrl         = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/Title.png"
 
 # Tracks hover state per tile control (main tiles, toolbox tiles, exit tile).
 # Initialized here, at the top of the script, so it always exists before any
@@ -49,6 +51,40 @@ function Install-MbcIcon {
             return $script:IconInstallPath
         }
         Remove-Item $script:IconInstallPath -Force -ErrorAction SilentlyContinue
+        return $null
+    } catch {
+        return $null
+    }
+}
+
+function Install-MbcLogo {
+    # Resolves a local path to Title.png, trying (in order):
+    #   1. Next to the running script (so a bundled Title.png is picked up as-is)
+    #   2. Already cached in the install dir from a previous run
+    #   3. Downloaded fresh into the install dir
+    # Returns the resolved path, or $null if none of those worked.
+    try {
+        $besideScript = $null
+        if ($MyInvocation.PSCommandPath) {
+            $besideScript = [System.IO.Path]::Combine((Split-Path $MyInvocation.PSCommandPath -Parent), "Title.png")
+        }
+        if ($besideScript -and (Test-Path $besideScript)) {
+            return $besideScript
+        }
+
+        if (Test-Path $script:LogoInstallPath) {
+            return $script:LogoInstallPath
+        }
+
+        if (-not (Test-Path $script:InstallDir)) {
+            New-Item -ItemType Directory -Path $script:InstallDir -Force | Out-Null
+        }
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadFile($script:LogoUrl, $script:LogoInstallPath)
+        if ((Get-Item $script:LogoInstallPath -ErrorAction SilentlyContinue).Length -gt 0) {
+            return $script:LogoInstallPath
+        }
+        Remove-Item $script:LogoInstallPath -Force -ErrorAction SilentlyContinue
         return $null
     } catch {
         return $null
@@ -1738,7 +1774,7 @@ function Show-UsbAnalyzer {
     $analyzerTitlePicBox.BackColor = [System.Drawing.Color]::Black
 
     try {
-        $logoPath2 = "C:\SUIOVOI CONFIG\Title.png"
+        $logoPath2 = if ($script:LogoPath) { $script:LogoPath } else { $script:LogoInstallPath }
         if (Test-Path $logoPath2) {
             $imgBytes2 = [System.IO.File]::ReadAllBytes($logoPath2)
             $ms2 = New-Object System.IO.MemoryStream($imgBytes2, 0, $imgBytes2.Length)
@@ -2936,8 +2972,9 @@ Read-Settings
 # 3. Download music file if not cached
 Get-MusicFile
 
-# 2. Extract MBC icon and create Desktop shortcut (first run only)
+# 2. Extract MBC icon/logo and create Desktop shortcut (first run only)
 $script:IconPath = Install-MbcIcon
+$script:LogoPath = Install-MbcLogo
 Install-DesktopShortcut -IconPath $script:IconPath
 Install-StartMenuShortcut -IconPath $script:IconPath
 
@@ -3009,7 +3046,7 @@ $titlePicBox.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
 $titlePicBox.BackColor = [System.Drawing.Color]::Black
 
 try {
-    $logoPath = "C:\SUIOVOI CONFIG\Title.png"
+    $logoPath = if ($script:LogoPath) { $script:LogoPath } else { $script:LogoInstallPath }
     if (Test-Path $logoPath) {
         $imgBytes = [System.IO.File]::ReadAllBytes($logoPath)
         $ms = New-Object System.IO.MemoryStream($imgBytes, 0, $imgBytes.Length)
