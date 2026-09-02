@@ -3735,7 +3735,8 @@ function Show-ToolboxPage {
     # Build toolbox tiles only once; reuse on subsequent visits
     if ($script:toolboxTiles.Count -eq 0) {
         $tbItems = @(
-            @{Name="Auto Calibration";                    URL="AUTO_CALIBRATE";        Desc="Edit stick calibration JSON values (xMin/yMin/xMax/yMax)"},
+            # Temporarily removed - uncomment to restore:
+            # @{Name="Auto Calibration";                    URL="AUTO_CALIBRATE";        Desc="Edit stick calibration JSON values (xMin/yMin/xMax/yMax)"},
             # Temporarily removed - uncomment to restore:
             # @{Name="Beta Portal";                         URL="BETA_PORTAL";           Desc="Enroll your board in the beta program and receive early firmware updates"},
             @{Name="DeepPoll";                            URL="DEEPPOLL";              Desc="Measures USB polling rate with microsecond precision using kernel-level ETW tracing"; Admin="Requires Admin Permissions"},
@@ -3746,7 +3747,8 @@ function Show-ToolboxPage {
             # @{Name="Join Suiovoi Discord";              URL="DISCORD";               Desc="Join the Suiovoi community on Discord"},
             # Temporarily removed - uncomment to restore:
             # @{Name="Troubleshooting";                     URL="TROUBLESHOOTING";       Desc="Common issues and solutions for Marius controllers"},
-            @{Name="FR33THY Ultimate Optimization Guide"; URL="FR33THY_GUIDE";         Desc="Optimise and Debloat Windows"},
+            # Temporarily removed - uncomment to restore:
+            # @{Name="FR33THY Ultimate Optimization Guide"; URL="FR33THY_GUIDE";         Desc="Optimise and Debloat Windows"},
             @{Name="Color Customizer";                    URL="COLOR_CUSTOMIZER";      Desc="Change the app's accent color to your liking"},
             @{Name="Back";                                URL="BACK";                  Desc="Return to main menu"}
         )
