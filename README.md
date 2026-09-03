@@ -4,12 +4,23 @@ A Windows desktop configuration tool for the Suiovoi controller board — built 
 
 Board by **@Rilol_8** · Tool by **@ImJrid**
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/main-menu.png" width="600" alt="Suiovoi Configurator main menu">
+  <br><em>Main menu</em>
+  <br><br>
+  <img src="screenshots/toolbox.png" width="600" alt="Suiovoi Toolbox">
+  <br><em>Suiovoi Toolbox</em>
+</p>
+
 ## Features
 
 - Controller/board configuration GUI
 - Built-in USB Latency Analyzer — identifies whether your USB ports are wired directly to your CPU or routed through the chipset/a hub, and detects your Intel/AMD platform's USB controller
 - **DeepPoll** — measures USB polling rate with microsecond precision using kernel-level ETW tracing (requires admin)
 - **DeepLog** — logs USB input events with microsecond timestamps for latency analysis (requires admin)
+- **Color Customizer** — change the app's accent color to your liking
 - Self-updating: checks for and installs the latest version automatically
 - Custom icon, taskbar integration, and optional background music
 
@@ -62,6 +73,19 @@ This removes the app folder (`C:\SUIOVOI CONFIG`), the Desktop shortcut, and the
 Run it from PowerShell directly instead of double-clicking — this surfaces the actual error:
 ```powershell
 cd "C:\SUIOVOI CONFIG"
+.\Suiovoi.ps1
+```
+
+**Windows Defender / SmartScreen flags the file**
+This is a false positive — the script self-installs, hides its console window, and downloads files on first run, which can trigger antivirus heuristics even though it's not malicious. Restore it from quarantine or add an exclusion if needed.
+
+**Wrong icon on the taskbar**
+Make sure you're launching from the Desktop shortcut created on first run, not by double-clicking the raw script — the shortcut carries the correct icon.
+
+## Credits
+
+- Board design: [@Rilol_8](https://github.com/Rilol_8)
+- Configurator tool: [@ImJrid](https://github.com/ImJrid)
 .\Suiovoi.ps1
 ```
 
