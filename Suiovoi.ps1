@@ -129,6 +129,66 @@ function Install-SuiovoiCacheCleaner {
     }
 }
 
+function Sync-SuiovoiAssets {
+    # Compares every downloadable asset (icon, logo, music, cache cleaner) against
+    # what's currently live on GitHub by content hash - NOT by version number, since
+    # none of these files carry a version string of their own. Anything whose hash
+    # differs from last time (or has no recorded hash yet) gets re-downloaded and
+    # overwrite the local copy. Returns the list of asset names that were updated.
+    $manifestPath = "$script:InstallDir\AssetHashes.json"
+    $manifest = @{}
+    if (Test-Path $manifestPath) {
+        try {
+            $raw = Get-Content -Path $manifestPath -Raw -ErrorAction Stop
+            $obj = $raw | ConvertFrom-Json -ErrorAction Stop
+            $obj.PSObject.Properties | ForEach-Object { $manifest[$_.Name] = $_.Value }
+        } catch {
+            $manifest = @{}
+        }
+    }
+
+    $assets = @(
+        @{ Name = "Suiovoi.ico";    Url = $script:IconUrl;    Path = $script:IconInstallPath },
+        @{ Name = "Title.png";      Url = $script:LogoUrl;    Path = $script:LogoInstallPath },
+        @{ Name = "MMusic.mp3";     Url = $script:MusicUrl;   Path = $script:MusicPath },
+        @{ Name = "CacheCleaner.exe"; Url = $script:CleanerUrl; Path = $script:CleanerPath }
+    )
+
+    $updated = @()
+    $wc = New-Object System.Net.WebClient
+    $wc.Headers.Add("User-Agent", "MARIUS-Updater")
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+
+    foreach ($asset in $assets) {
+        try {
+            $bytes    = $wc.DownloadData($asset.Url)
+            if (-not $bytes -or $bytes.Length -eq 0) { continue }
+            $hashHex  = [System.BitConverter]::ToString($sha256.ComputeHash($bytes)) -replace '-', ''
+
+            $prevHash = $manifest[$asset.Name]
+            if ($prevHash -eq $hashHex -and (Test-Path $asset.Path)) {
+                continue  # unchanged, already installed - nothing to do
+            }
+
+            $dir = Split-Path $asset.Path -Parent
+            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            [System.IO.File]::WriteAllBytes($asset.Path, $bytes)
+
+            $manifest[$asset.Name] = $hashHex
+            $updated += $asset.Name
+        } catch {
+            # Skip this asset on any failure (offline, missing on repo, etc.) -
+            # it just stays whatever it was locally.
+        }
+    }
+
+    try {
+        ($manifest | ConvertTo-Json) | Set-Content -Path $manifestPath -Force -ErrorAction SilentlyContinue
+    } catch { }
+
+    return $updated
+}
+
 function Install-DesktopShortcut {
     param([string]$IconPath)
     try {
@@ -4380,15 +4440,32 @@ foreach ($site in $websites) {
                     }
                 }
 
+                # ── Sync icon/logo/music/cache-cleaner by content hash, independent
+                #    of the script's own version number - these files don't carry a
+                #    version string, so this is the only way to pick up changes to them. ──
+                $updatedAssets = Sync-SuiovoiAssets
+                if ($updatedAssets.Count -gt 0) {
+                    Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Refreshed changed asset(s): $($updatedAssets -join ', ')" -ErrorAction SilentlyContinue
+                }
+
                 # ── Version check - skip the download entirely if already current ──
                 if ($tagLine -eq $script:CurrentVersion) {
                     Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - Already on latest (v$script:CurrentVersion) - skipping" -ErrorAction SilentlyContinue
-                    [System.Windows.Forms.MessageBox]::Show(
-                        "You're already on the latest version (v$script:CurrentVersion).",
-                        "Suiovoi Configurator - Up to Date",
-                        [System.Windows.Forms.MessageBoxButtons]::OK,
-                        [System.Windows.Forms.MessageBoxIcon]::Information
-                    ) | Out-Null
+                    if ($updatedAssets.Count -gt 0) {
+                        [System.Windows.Forms.MessageBox]::Show(
+                            "You're already on the latest version (v$script:CurrentVersion).`n`nRefreshed: $($updatedAssets -join ', ')",
+                            "Suiovoi Configurator - Up to Date",
+                            [System.Windows.Forms.MessageBoxButtons]::OK,
+                            [System.Windows.Forms.MessageBoxIcon]::Information
+                        ) | Out-Null
+                    } else {
+                        [System.Windows.Forms.MessageBox]::Show(
+                            "You're already on the latest version (v$script:CurrentVersion).",
+                            "Suiovoi Configurator - Up to Date",
+                            [System.Windows.Forms.MessageBoxButtons]::OK,
+                            [System.Windows.Forms.MessageBoxIcon]::Information
+                        ) | Out-Null
+                    }
                     return
                 }
 
@@ -4419,8 +4496,12 @@ foreach ($site in $websites) {
                 $instSize = (Get-Item $installPath).Length
                 Add-Content -Path $logFile -Value "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] UPDATE - SUCCESS v$tagLine installed ($instSize bytes) - relaunching" -ErrorAction SilentlyContinue
 
+                $successMsg = "Updated to v$tagLine. Relaunching now..."
+                if ($updatedAssets.Count -gt 0) {
+                    $successMsg = "Updated to v$tagLine (also refreshed: $($updatedAssets -join ', ')). Relaunching now..."
+                }
                 [System.Windows.Forms.MessageBox]::Show(
-                    "Updated to v$tagLine. Relaunching now...",
+                    $successMsg,
                     "Suiovoi Configurator - Update Complete",
                     [System.Windows.Forms.MessageBoxButtons]::OK,
                     [System.Windows.Forms.MessageBoxIcon]::Information
