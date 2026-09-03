@@ -3,7 +3,7 @@
 # ============================================================================
 # INSTALL PATHS
 # ============================================================================
-$script:CurrentVersion = "1.4"
+$script:CurrentVersion = "1.5"
 $script:InstallDir     = "C:\SUIOVOI CONFIG"
 $script:InstallPath    = "$script:InstallDir\Suiovoi.ps1"
 $script:ScriptUrl      = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/Suiovoi.ps1"
@@ -3214,17 +3214,19 @@ function Show-SellerPicker {
 
     $script:spDrag = $false; $script:spDX = 0; $script:spDY = 0
 
+    $bg = Get-SafeColor -Value $script:BgColor -Fallback ([System.Drawing.Color]::FromArgb(26, 6, 6))
+
     $inner = New-Object System.Windows.Forms.Panel
     $inner.Location  = New-Object System.Drawing.Point(2, 2)
     $inner.Size      = New-Object System.Drawing.Size(($W - 4), ($H - 4))
-    $inner.BackColor = [System.Drawing.Color]::FromArgb(26, 6, 6)
+    $inner.BackColor = $bg
     $dlg.Controls.Add($inner)
 
     # ── Title bar ────────────────────────────────────────────────────────────
     $titleBar = New-Object System.Windows.Forms.Panel
     $titleBar.Location  = New-Object System.Drawing.Point(0, 0)
     $titleBar.Size      = New-Object System.Drawing.Size(($W - 4), 50)
-    $titleBar.BackColor = [System.Drawing.Color]::FromArgb(26, 6, 6)
+    $titleBar.BackColor = $bg
     $inner.Controls.Add($titleBar)
     $titleBar.Add_MouseDown({ $script:spDrag=$true; $script:spDX=[System.Windows.Forms.Cursor]::Position.X-$dlg.Left; $script:spDY=[System.Windows.Forms.Cursor]::Position.Y-$dlg.Top })
     $titleBar.Add_MouseMove({ if($script:spDrag){ $dlg.Left=[System.Windows.Forms.Cursor]::Position.X-$script:spDX; $dlg.Top=[System.Windows.Forms.Cursor]::Position.Y-$script:spDY } })
@@ -3266,15 +3268,15 @@ function Show-SellerPicker {
         $btn.Location  = New-Object System.Drawing.Point(20, $btnY)
         $btn.Size      = New-Object System.Drawing.Size(($W - 44), $blockH)
         $btn.FlatStyle = "Flat"
-        $btn.BackColor = [System.Drawing.Color]::FromArgb(26, 6, 6)
+        $btn.BackColor = $bg
         $btn.ForeColor = [System.Drawing.Color]::White
         $btn.Font      = New-Object System.Drawing.Font("Segoe UI", 16, [System.Drawing.FontStyle]::Bold)
         $btn.Text      = ""
         $btn.Cursor    = [System.Windows.Forms.Cursors]::Hand
         $btn.FlatAppearance.BorderSize  = 1
         $btn.FlatAppearance.BorderColor = $script:AccentColor
-        $btn.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(48, 12, 12)
-        $btn.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::FromArgb(64, 16, 16)
+        $btn.FlatAppearance.MouseOverBackColor = Blend-Color -Base $bg -Target ([System.Drawing.Color]::White) -Ratio 0.10
+        $btn.FlatAppearance.MouseDownBackColor = Blend-Color -Base $bg -Target ([System.Drawing.Color]::White) -Ratio 0.16
         $btn.Add_MouseEnter({ $this.FlatAppearance.BorderColor = $script:AccentGlow; $this.FlatAppearance.BorderSize = 2 })
         $btn.Add_MouseLeave({ $this.FlatAppearance.BorderColor = $script:AccentColor; $this.FlatAppearance.BorderSize = 1 })
         $sellerUrl = $seller.Url
