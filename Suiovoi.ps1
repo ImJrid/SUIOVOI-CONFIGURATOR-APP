@@ -3257,7 +3257,7 @@ function Show-SellerPicker {
 
     # ── Seller buttons ──────────────────────────────────────────────────────
     $sellers = @(
-        @{ Name = "@l1mitcontrollers";  Url = "https://x.com/l1mitcontrollers"; DisplayUrl = "x.com/l1mitcontrollers"; DiscordUrl = "https://discord.gg/QGKK3AAGJx"; DiscordDisplay = "discord.gg/QGKK3AAGJx"; LogoB64 = $script:L1mitLogoB64 },
+        @{ Name = "@l1mitcontroller";  Url = "https://x.com/l1mitcontroller"; DisplayUrl = "x.com/l1mitcontroller"; DiscordUrl = "https://discord.gg/QGKK3AAGJx"; DiscordDisplay = "discord.gg/QGKK3AAGJx"; LogoB64 = $script:L1mitLogoB64 },
         @{ Name = "@headglytch";   Url = "https://x.com/headglytch";   DisplayUrl = "x.com/headglytch";   DiscordUrl = "https://discord.gg/SmSjfAbwCq"; DiscordDisplay = "discord.gg/SmSjfAbwCq"; LogoB64 = $script:HeadglytchLogoB64 }
     )
 
@@ -4169,7 +4169,7 @@ $infoIcon.Add_Click({ Show-InfoPopup })
 
 $websites = @(
     @{Name="Setup Controller";         URL="https://sy2.suiovoi.cc/";                                Desc="Calibrate and configure your controller settings and polling rate settings"},
-    @{Name="Sellers";                  URL="SELLERS_PAGES";          Desc="Buy from @l1mitcontrollers or @headglytch - X or Discord"},
+    @{Name="Sellers";                  URL="SELLERS_PAGES";          Desc="Buy from @l1mitcontroller or @headglytch - X or Discord"},
     @{Name="Joystick Tester";          URL="https://hardwaretester.com/gamepad";                         Desc="Test your joystick inputs, buttons, and analog stick precision"},
     @{Name="Polling Rate Checker";     URL="https://tools.mariusheier.com/poll_checker.html";            Desc="Test and verify your controller's polling rate"},
     @{Name="USB Latency Analyzer"; URL="USB_ANALYZER";                                                Desc="Count chips between your device and CPU. More chips = more latency"},
