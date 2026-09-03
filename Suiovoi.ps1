@@ -15,6 +15,8 @@ $script:IconInstallPath = "$script:InstallDir\Suiovoi.ico"
 $script:IconUrl         = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/suiovoi.ico"
 $script:LogoInstallPath = "$script:InstallDir\Title.png"
 $script:LogoUrl         = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/Title.png"
+$script:CleanerPath     = "$script:InstallDir\CacheCleaner.exe"
+$script:CleanerUrl      = "https://raw.githubusercontent.com/ImJrid/SUIOVOI-CONFIGURATOR-APP/main/CacheCleaner.exe"
 
 # Tracks hover state per tile control (main tiles, toolbox tiles, exit tile).
 # Initialized here, at the top of the script, so it always exists before any
@@ -87,6 +89,42 @@ function Install-SuiovoiLogo {
         Remove-Item $script:LogoInstallPath -Force -ErrorAction SilentlyContinue
         return $null
     } catch {
+        return $null
+    }
+}
+
+function Install-SuiovoiCacheCleaner {
+    # Resolves a local path to CacheCleaner.exe, trying (in order):
+    #   1. Next to the running script (so a bundled .exe is picked up as-is)
+    #   2. Already cached in the install dir from a previous run
+    #   3. Downloaded fresh into the install dir
+    # Returns the resolved path, or $null if none of those worked.
+    try {
+        $besideScript = $null
+        if ($MyInvocation.PSCommandPath) {
+            $besideScript = [System.IO.Path]::Combine((Split-Path $MyInvocation.PSCommandPath -Parent), "CacheCleaner.exe")
+        }
+        if ($besideScript -and (Test-Path $besideScript)) {
+            return $besideScript
+        }
+
+        if (Test-Path $script:CleanerPath) {
+            return $script:CleanerPath
+        }
+
+        if (-not (Test-Path $script:InstallDir)) {
+            New-Item -ItemType Directory -Path $script:InstallDir -Force | Out-Null
+        }
+        $wc = New-Object System.Net.WebClient
+        $wc.Headers.Add("User-Agent", "MARIUS-Updater")
+        $wc.DownloadFile($script:CleanerUrl, $script:CleanerPath)
+        if ((Get-Item $script:CleanerPath -ErrorAction SilentlyContinue).Length -gt 0) {
+            return $script:CleanerPath
+        }
+        Remove-Item $script:CleanerPath -Force -ErrorAction SilentlyContinue
+        return $null
+    } catch {
+        Remove-Item $script:CleanerPath -Force -ErrorAction SilentlyContinue
         return $null
     }
 }
@@ -4259,12 +4297,12 @@ foreach ($site in $websites) {
         }
 
         if ($targetUrl -eq "CACHE_CLEANER") {
-            $cleanerPath = "C:\SUIOVOI CONFIG\CacheCleaner.exe"
-            if (Test-Path $cleanerPath) {
+            $cleanerPath = Install-SuiovoiCacheCleaner
+            if ($cleanerPath -and (Test-Path $cleanerPath)) {
                 Start-Process $cleanerPath
             } else {
                 [System.Windows.Forms.MessageBox]::Show(
-                    "USB Cache Cleaner not found.`n`nPlace the tool at:`n$cleanerPath",
+                    "Couldn't download the USB Cache Cleaner.`n`nCheck your internet connection and try again, or place the tool manually at:`n$script:CleanerPath",
                     "Suiovoi Configurator",
                     [System.Windows.Forms.MessageBoxButtons]::OK,
                     [System.Windows.Forms.MessageBoxIcon]::Warning
